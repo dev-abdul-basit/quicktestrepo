@@ -1,0 +1,78 @@
+name: Android CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up JDK
+      uses: actions/setup-java@v2
+      with:
+        distribution: 'zulu'
+        java-version: '11'
+
+    - name: Set up Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        flutter-version: '3.24.3'
+        channel: 'stable'
+
+    - name: Set up Keystore
+      env: 
+        ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE }}
+      run: echo $ANDROID_KEYSTORE_BASE64 | base64 --decode > ./android/app/upload-keystore.jks
+    
+    - name: Flutter Clean & Pub Get
+      run: |
+        flutter clean
+        flutter pub get 
+
+    - name: Run Build Runner 
+      run: flutter pub run build_runner build --delete-conflicting-outputs
+       
+    - name: Build Flutter App
+      run: flutter build appbundle --release
+      env:
+        KEY_ALIAS: ${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}
+        KEYSTORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}
+        STORE_FILE: ./upload-keystore.jks
+        STORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}
+
+    - name: Set up Ruby
+      uses: ruby/setup-ruby@v1
+      with:
+        ruby-version: '2.7'
+
+    - name: Install Dependencies
+      run: |
+        cd android
+        gem install bundler:1.17.2
+        bundle install
+
+    - name: Run Fastlane for Development Branch
+      if: github.ref == 'refs/heads/dev'
+      run: |
+        cd android
+        bundle exec fastlane build_android
+      env:
+        AAB_FILE_PATH: ../build/app/outputs/bundle/release/app-release.aab
+
+    - name: Run Fastlane for Master Branch
+      if: github.ref == 'refs/heads/master'
+      run: |
+        cd android
+        bundle exec fastlane promote_to_production
+      env:
+        MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}
+        MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}
+        MYAPP_UPLOAD_STORE_FILE: android/app/upload-keystore.jks
+        MYAPP_UPLOAD_STORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}
