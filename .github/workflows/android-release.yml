@@ -27,25 +27,23 @@ jobs:
         channel: 'stable'
 
     - name: Set up Keystore
-      env: 
-        ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE }}
-      run: echo $ANDROID_KEYSTORE_BASE64 | base64 --decode > upload-keystore.jks
-    
-    - name: Verify Keystore Location
-      run: ls -la ./android/app/
-    
+      run: |
+        echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > android/app/keystore.jks
+
     - name: Flutter Clean & Pub Get
       run: |
         flutter clean
         flutter pub get 
 
+    - name: Create key.properties
+      run: |
+        echo "storePassword=${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" > android/key.properties
+        echo "keyPassword=${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}" >> android/key.properties
+        echo "keyAlias=${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" >> android/key.properties
+        echo "storeFile=keystore.jks" >> android/key.properties    
+
     - name: Build Flutter App
       run: flutter build appbundle --release
-      env:
-        KEY_ALIAS: ${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}
-        KEYSTORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}
-        STORE_FILE: upload-keystore.jks
-        STORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}
 
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
