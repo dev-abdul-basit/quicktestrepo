@@ -28,7 +28,8 @@ jobs:
 
     - name: Set up Keystore
       run: |
-        echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > upload-keystore.jks
+        echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > .android/app/upload-keystore.jks
+      working-directory: android/app  
 
     - name: Flutter Clean & Pub Get
       run: |
@@ -40,7 +41,8 @@ jobs:
         echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" > android/key.properties
         echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}" >> android/key.properties
         echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" >> android/key.properties
-        echo "MYAPP_UPLOAD_STORE_FILE=upload-keystore.jks" >> android/key.properties    
+        echo "MYAPP_UPLOAD_STORE_FILE=upload-keystore.jks" >> android/key.properties
+      working-directory: android/app      
 
     - name: Build Flutter App
       run: flutter build appbundle --release
