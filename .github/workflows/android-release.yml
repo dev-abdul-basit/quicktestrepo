@@ -42,7 +42,7 @@ jobs:
         echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}" >> android/key.properties
         echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" >> android/key.properties
         echo "MYAPP_UPLOAD_STORE_FILE=upload-keystore.jks" >> android/key.properties
-      working-directory: android/app      
+      working-directory: .      
 
     - name: Build Flutter App
       run: flutter build appbundle --release
