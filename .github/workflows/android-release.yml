@@ -28,8 +28,8 @@ jobs:
 
     - name: Set up Keystore
       run: |
-        echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > .android/app/upload-keystore.jks
-      working-directory: android/app  
+        echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > android/app/upload-keystore.jks
+      working-directory: .  
 
     - name: Flutter Clean & Pub Get
       run: |
