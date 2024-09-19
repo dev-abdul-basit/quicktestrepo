@@ -29,7 +29,7 @@ jobs:
     - name: Set up Keystore
       env: 
         ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE }}
-      run: echo $ANDROID_KEYSTORE_BASE64 | base64 --decode > ./android/app/upload-keystore.jks
+      run: echo $ANDROID_KEYSTORE_BASE64 | base64 --decode > upload-keystore.jks
     
     - name: Verify Keystore Location
       run: ls -la ./android/app/
@@ -44,7 +44,7 @@ jobs:
       env:
         KEY_ALIAS: ${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}
         KEYSTORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}
-        STORE_FILE: ./upload-keystore.jks
+        STORE_FILE: upload-keystore.jks
         STORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}
 
     - name: Set up Ruby
@@ -74,5 +74,5 @@ jobs:
       env:
         MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}
         MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}
-        MYAPP_UPLOAD_STORE_FILE: app/upload-keystore.jks
+        MYAPP_UPLOAD_STORE_FILE: upload-keystore.jks
         MYAPP_UPLOAD_STORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}
