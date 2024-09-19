@@ -35,12 +35,12 @@ jobs:
         flutter clean
         flutter pub get 
 
-    - name: Create key.properties
-      run: |
-        echo "storePassword=${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" > android/key.properties
-        echo "keyPassword=${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}" >> android/key.properties
-        echo "keyAlias=${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" >> android/key.properties
-        echo "storeFile=keystore.jks" >> android/key.properties    
+    # - name: Create key.properties
+    #   run: |
+    #     echo "storePassword=${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" > android/key.properties
+    #     echo "keyPassword=${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}" >> android/key.properties
+    #     echo "keyAlias=${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" >> android/key.properties
+    #     echo "storeFile=keystore.jks" >> android/key.properties    
 
     - name: Build Flutter App
       run: flutter build appbundle
