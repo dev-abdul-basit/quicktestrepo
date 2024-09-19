@@ -41,7 +41,7 @@ jobs:
       env:
         KEY_ALIAS: ${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}
         KEYSTORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}
-        STORE_FILE: ./upload-keystore.jks
+        STORE_FILE: upload-keystore.jks
         STORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}
 
     - name: Set up Ruby
