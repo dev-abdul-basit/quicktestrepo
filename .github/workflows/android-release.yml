@@ -43,7 +43,7 @@ jobs:
     #     echo "storeFile=keystore.jks" >> android/key.properties    
 
     - name: Build Flutter App
-      run: flutter build appbundle
+      run: flutter build appbundle --stacktrace
 
     - name: Set up Ruby
       uses: ruby/setup-ruby@v1
