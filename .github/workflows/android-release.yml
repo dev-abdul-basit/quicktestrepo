@@ -1,4 +1,4 @@
-name: Android CI/CD Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -7,72 +7,125 @@ on:
       - master
 
 jobs:
-  deploy:
+  flutter_test:
+    name: Run Flutter Tests
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up JDK
-      uses: actions/setup-java@v2
-      with:
-        distribution: 'zulu'
-        java-version: '17'
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: "17"
 
-    - name: Set up Flutter
-      uses: subosito/flutter-action@v2
-      with:
-        flutter-version: '3.24.3'
-        channel: 'stable'
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
 
-    - name: Set up Keystore
-      run: |
-        echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > android/app/upload-keystore.jks
-      working-directory: .  
+      - name: Install dependencies
+        run: flutter pub get
 
-    - name: Flutter Clean & Pub Get
-      run: |
-        flutter clean
-        flutter pub get 
+      - name: Run Flutter Analyze
+        run: flutter analyze
 
-    - name: Create key.properties
-      run: |
-        echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" > android/key.properties
-        echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}" >> android/key.properties
-        echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" >> android/key.properties
-        echo "MYAPP_UPLOAD_STORE_FILE=upload-keystore.jks" >> android/key.properties
-      working-directory: .      
+      - name: Run Flutter Tests
+        run: flutter test
 
-    - name: Build Flutter App
-      run: flutter build appbundle --release
+  build_android:
+    name: Android Build & Deploy
+    needs: [flutter_test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Set up Ruby
-      uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: '3.3.5'
+      - name: Set up JDK
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'zulu'
+          java-version: '17'
 
-    - name: Install Dependencies
-      run: |
-        cd android
-        gem install bundler:2.5.19
-        bundle install
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.3'
+          channel: 'stable'
 
-    - name: Run Fastlane for Development Branch
-      if: github.ref == 'refs/heads/dev'
-      run: |
-        cd android
-        bundle exec fastlane build_android
-      env:
-        AAB_FILE_PATH: ../build/app/outputs/bundle/release/app-release.aab
+      - name: Set up Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE }}" | base64 --decode > android/app/upload-keystore.jks
+        working-directory: .  
 
-    - name: Run Fastlane for Master Branch
-      if: github.ref == 'refs/heads/master'
-      run: |
-        cd android
-        bundle exec fastlane promote_to_production
-      env:
-        MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}
-        MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}
-        MYAPP_UPLOAD_STORE_FILE: upload-keystore.jks
-        MYAPP_UPLOAD_STORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}
+      - name: Flutter Clean & Pub Get
+        run: |
+          flutter clean
+          flutter pub get 
+
+      - name: Create key.properties
+        run: |
+          echo "MYAPP_UPLOAD_STORE_PASSWORD=${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}" > android/key.properties
+          echo "MYAPP_UPLOAD_KEY_PASSWORD=${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}" >> android/key.properties
+          echo "MYAPP_UPLOAD_KEY_ALIAS=${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}" >> android/key.properties
+          echo "MYAPP_UPLOAD_STORE_FILE=upload-keystore.jks" >> android/key.properties
+        working-directory: .      
+
+      - name: Build Flutter App (Android)
+        run: flutter build appbundle --release
+
+      - name: Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3.5'
+
+      - name: Install Fastlane Dependencies
+        run: |
+          cd android
+          gem install bundler:2.5.19
+          bundle install
+
+      - name: Run Fastlane for Development Branch
+        if: github.ref == 'refs/heads/dev'
+        run: |
+          cd android
+          bundle exec fastlane build_android
+        env:
+          AAB_FILE_PATH: ../build/app/outputs/bundle/release/app-release.aab
+
+      - name: Run Fastlane for Master Branch
+        if: github.ref == 'refs/heads/master'
+        run: |
+          cd android
+          bundle exec fastlane promote_to_production
+        env:
+          MYAPP_UPLOAD_KEY_ALIAS: ${{ secrets.MYAPP_UPLOAD_KEY_ALIAS }}
+          MYAPP_UPLOAD_KEY_PASSWORD: ${{ secrets.MYAPP_UPLOAD_KEY_PASSWORD }}
+          MYAPP_UPLOAD_STORE_FILE: upload-keystore.jks
+          MYAPP_UPLOAD_STORE_PASSWORD: ${{ secrets.MYAPP_UPLOAD_STORE_PASSWORD }}
+
+  build_ios:
+    name: Build iOS App
+    needs: [build_android]
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up JDK
+        uses: actions/setup-java@v1
+        with:
+          java-version: "17"
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v1
+        with:
+          channel: "stable"
+
+      - name: Flutter Clean & Pub Get
+        run: |
+          flutter clean
+          flutter pub get 
+
+      - name: Build iOS App (No Codesign)
+        run: flutter build ios --no-codesign
