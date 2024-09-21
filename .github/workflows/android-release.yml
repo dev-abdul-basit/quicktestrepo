@@ -34,7 +34,7 @@ jobs:
         run: flutter test
 
   build_android:
-    name: Android Build & Deploy
+    name: Android Build Only
     needs: [flutter_test]
     runs-on: ubuntu-latest
     steps:
